@@ -94,3 +94,18 @@ https://api.gamma.f5.si/post/1
 <img src="YU-TechnicalDepartment" width="50"> <img src="sadaramagura" width="50"> <img src="Copilot" width="50">  
 ご協力いただき、ありがとうございます。  
 また、アイデアもお願いします。
+
+---
+
+## 追加ドキュメント（拡張設計）
+このリポジトリは既存の掲示板機能を壊さない方針で、将来拡張用のドキュメントとテンプレートを追加しています。
+
+- セットアップ: `docs/SETUP.md`
+- アーキテクチャ: `docs/ARCHITECTURE.md`
+- デプロイ: `docs/DEPLOYMENT.md`
+- 保守運用: `docs/MAINTENANCE.md`
+- 環境変数テンプレート: `.env.template`
+- Firebase設定テンプレート: `firebase.json`
+- Supabaseストレージポリシー: `supabase/policies.sql`
+- GitHub Pagesデプロイ: `.github/workflows/deploy.yml`
+
