@@ -7,10 +7,36 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <title>掲示板</title>
   <style>
+    :root {
+      --bg: #f6f8fb;
+      --surface: rgba(255, 255, 255, 0.9);
+      --surface-strong: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --primary: #26a79a;
+      --primary-strong: #1f877b;
+      --chip: #e8fffc;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+    body.theme-dark {
+      --bg: #111827;
+      --surface: rgba(17, 24, 39, 0.85);
+      --surface-strong: #1f2937;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --border: #374151;
+      --primary: #2dd4bf;
+      --primary-strong: #14b8a6;
+      --chip: #0f2a2a;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
     /* ページ全体のフォント・余白設定 & 背景設定 */
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
+      color: var(--text);
+      background-color: var(--bg);
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
@@ -19,6 +45,69 @@
     #posts {
       list-style-type: none;
       padding: 0;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(4px);
+      padding: 16px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--chip);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .meta-grid .pill {
+      justify-content: center;
+      color: var(--text);
+    }
+    .sidebar-section h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip {
+      border: 1px solid var(--border);
+      background: var(--chip);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .chip:hover {
+      border-color: var(--primary);
     }
     .post {
       margin-bottom: 20px;
@@ -92,7 +181,7 @@
       resize: none;
     }
     button {
-      background-color: #26a79a;
+      background-color: var(--primary);
       color: white;
       padding: 15px 20px;
       border: none;
@@ -101,7 +190,11 @@
       font-size: 18px;
     }
     button:hover {
-      background-color: #1f877b;
+      background-color: var(--primary-strong);
+    }
+    .theme-toggle {
+      font-size: 14px;
+      padding: 8px 12px;
     }
     /* 設定ボタンのスタイル：背景色を半透明の明るいグレーに変更 */
     .settings-button {
@@ -192,15 +285,42 @@
       width: 20px; /* アイコンの幅 */
       height: 20px; /* アイコンの高さ */
     }
+    @media (min-width: 1024px) {
+      .layout {
+        grid-template-columns: 2fr 1fr;
+      }
+      .main-column {
+        display: grid;
+        gap: 16px;
+      }
+      .side-column {
+        display: grid;
+        gap: 16px;
+        align-content: start;
+      }
+    }
   </style>
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
-  <h1>掲示板</h1>
+  <div class="layout">
+    <div class="main-column">
+      <div class="card topbar">
+        <h1 style="margin:0;">掲示板</h1>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span class="pill">Live更新: 5秒</span>
+          <button id="theme-toggle" class="theme-toggle" type="button">🌙 ダーク</button>
+        </div>
+      </div>
 
-  <button class="settings-button" id="open-settings">
-    <img src="Setup.png" alt="設定">
-  </button>
+      <div class="card">
+        <div class="meta-grid">
+          <span class="pill" id="total-posts">投稿数: 0</span>
+          <span class="pill" id="active-users">参加者: 0</span>
+          <span class="pill" id="latest-post-time">最新投稿: --</span>
+          <span class="pill" id="active-filter">フィルター: なし</span>
+        </div>
+      </div>
 
   <div id="background-modal" class="modal">
     <div class="modal-content">
@@ -210,6 +330,7 @@
     </div>
   </div>
 
+      <div class="card">
   <form id="postForm" action="https://script.google.com/macros/s/AKfycbxdCarkggYZJvshEx07ItNVIV2B3zQ4N910AIjWsUyQ_IGCmo51Gceq_uqimJS1C365eA/exec" method="POST">
     <label for="username">ユーザー名:</label>
     <input type="text" id="username" name="username" placeholder="ユーザー名" required>
@@ -221,61 +342,262 @@
     <br>
     <button type="submit">投稿</button>
   </form>
-  <hr>
-  <ul id="posts"></ul>
+      </div>
+      <div class="card">
+        <ul id="posts"></ul>
+        <div style="text-align:center; margin-top:12px;">
+          <button id="load-more" type="button" style="display:none;">さらに50件読み込む</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side-column">
+      <section class="card sidebar-section">
+        <h3>ストーリー風ユーザー</h3>
+        <div id="story-users" class="chip-list"></div>
+      </section>
+      <section class="card sidebar-section">
+        <h3>トレンド</h3>
+        <div id="trends" class="chip-list"></div>
+      </section>
+      <section class="card sidebar-section">
+        <h3>コミュニティ</h3>
+        <div id="community-tags" class="chip-list"></div>
+      </section>
+    </aside>
+  </div>
+
+  <button class="settings-button" id="open-settings">
+    <img src="Setup.png" alt="設定">
+  </button>
 
   <script>
-    async function fetchPosts() {
-      const response = await fetch('https://script.google.com/macros/s/AKfycbxdCarkggYZJvshEx07ItNVIV2B3zQ4N910AIjWsUyQ_IGCmo51Gceq_uqimJS1C365eA/exec');
-      let posts = await response.json();
-      posts = posts.slice(1);
+    let activeFilter = null;
+    let visibleCount = 50;
+    let currentFilteredPosts = [];
+
+    async function fetchPostsFromNumberApi(startNumber, maxTries = 600) {
+      const extraPosts = [];
+      let missCount = 0;
+
+      for (let number = startNumber; number < startNumber + maxTries; number++) {
+        try {
+          const response = await fetch(`https://api.gamma.f5.si/post/${number}`);
+          if (!response.ok) {
+            missCount++;
+            if (missCount >= 10) break;
+            continue;
+          }
+
+          const data = await response.json();
+          const username = data.username || data.user || data.name;
+          const content = data.content || data.text || data.body;
+          const date = data.date || data.createdAt || data.timestamp;
+
+          if (username && content && date) {
+            extraPosts.push([date, username, content]);
+            missCount = 0;
+          } else {
+            missCount++;
+            if (missCount >= 10) break;
+          }
+        } catch (_error) {
+          break;
+        }
+      }
+
+      return extraPosts;
+    }
+
+    function normalizeWords(text) {
+      return text
+        .replace(/https?:\/\/\S+/g, "")
+        .replace(/[!-/:-@[-`{-~]/g, " ")
+        .split(/\s+/)
+        .filter(word => word.length >= 3);
+    }
+
+    function updateInsights(posts) {
+      const users = new Set();
+      const words = {};
+      const hashtags = {};
+
+      posts.forEach(post => {
+        const username = post[1];
+        const content = String(post[2] || "");
+        if (username) users.add(username);
+
+        normalizeWords(content.toLowerCase()).forEach(word => {
+          words[word] = (words[word] || 0) + 1;
+        });
+
+        const matchedTags = content.match(/#([\wぁ-んァ-ン一-龯ー]+)/g) || [];
+        matchedTags.forEach(tag => {
+          hashtags[tag] = (hashtags[tag] || 0) + 1;
+        });
+      });
+
+      const latest = posts[posts.length - 1];
+      const latestDate = latest ? new Date(latest[0]) : null;
+      document.getElementById('total-posts').textContent = `投稿数: ${posts.length}`;
+      document.getElementById('active-users').textContent = `参加者: ${users.size}`;
+      document.getElementById('latest-post-time').textContent = `最新投稿: ${latestDate && !isNaN(latestDate) ? latestDate.toLocaleString() : '--'}`;
+      document.getElementById('active-filter').textContent = `フィルター: ${activeFilter || 'なし'}`;
+
+      const storyUsers = document.getElementById('story-users');
+      storyUsers.innerHTML = '';
+      Array.from(users).slice(-8).forEach(user => {
+        const chip = document.createElement('button');
+        chip.className = 'chip';
+        chip.type = 'button';
+        chip.textContent = user;
+        chip.addEventListener('click', () => {
+          document.getElementById('username').value = user;
+          document.getElementById('content').focus();
+        });
+        storyUsers.appendChild(chip);
+      });
+
+      const trends = document.getElementById('trends');
+      trends.innerHTML = '';
+      Object.entries(words)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8)
+        .forEach(([word, count]) => {
+          const chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.textContent = `${word} (${count})`;
+          trends.appendChild(chip);
+        });
+
+      const communityTags = document.getElementById('community-tags');
+      communityTags.innerHTML = '';
+      const clearChip = document.createElement('button');
+      clearChip.className = 'chip';
+      clearChip.type = 'button';
+      clearChip.textContent = 'すべて表示';
+      clearChip.addEventListener('click', () => {
+        activeFilter = null;
+        fetchPosts();
+      });
+      communityTags.appendChild(clearChip);
+
+      Object.entries(hashtags)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8)
+        .forEach(([tag, count]) => {
+          const chip = document.createElement('button');
+          chip.className = 'chip';
+          chip.type = 'button';
+          chip.textContent = `${tag} (${count})`;
+          chip.addEventListener('click', () => {
+            activeFilter = tag;
+            fetchPosts();
+          });
+          communityTags.appendChild(chip);
+        });
+    }
+
+    function applyActiveFilter(posts) {
+      if (!activeFilter) return posts;
+      return posts.filter(post => String(post[2] || '').includes(activeFilter));
+    }
+
+    function renderPosts(posts) {
+      currentFilteredPosts = posts;
+      updateInsights(posts);
       const postsDiv = document.getElementById("posts");
+      const loadMoreButton = document.getElementById('load-more');
       postsDiv.innerHTML = '';
 
-      if (posts.length === 0) {
+      const visiblePosts = posts.slice(-visibleCount);
+
+      if (visiblePosts.length === 0) {
         postsDiv.innerHTML = `<p>まだ投稿がありません。</p>`;
-      } else {
-        posts.reverse().forEach((post, index) => {
-          if (post[1] && post[2] && post[0]) {
-            const postElement = document.createElement("div");
-            postElement.classList.add("post");
-            const postNumberValue = posts.length - index;
-            postElement.id = `post-${postNumberValue}`;
+        loadMoreButton.style.display = 'none';
+        return;
+      }
 
-            const postNumber = `#${postNumberValue}`;
-            const username = post[1];
-            let content = post[2].replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            const date = new Date(post[0]);
-            const formattedDate = isNaN(date) ? "" : date.toLocaleString();
-            const reportUrl = `https://docs.google.com/forms/d/e/1FAIpQLSe_gcI4CYjBM-ZGsIR5Q_nd0aquUixz7LixaqzfeuUjEowliQ/viewform?usp=pp_url&entry.1458296354=${encodeURIComponent(postNumber)}`;
+      visiblePosts.slice().reverse().forEach((post, index) => {
+        if (post[1] && post[2] && post[0]) {
+          const postElement = document.createElement("div");
+          postElement.classList.add("post");
+          const postNumberValue = posts.length - index;
+          postElement.id = `post-${postNumberValue}`;
 
-            const replyPattern = /^&gt;&gt;&gt;#(\d+)/;
-            if (replyPattern.test(content)) {
-              content = content.replace(replyPattern, (match, p1) => {
-                return `<a href="#post-${p1}" class="post-number-link">${match}</a>`;
-              });
-            }
+          const postNumber = `#${postNumberValue}`;
+          const username = post[1];
+          let content = post[2].replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          const date = new Date(post[0]);
+          const formattedDate = isNaN(date) ? "" : date.toLocaleString();
+          const reportUrl = `https://docs.google.com/forms/d/e/1FAIpQLSe_gcI4CYjBM-ZGsIR5Q_nd0aquUixz7LixaqzfeuUjEowliQ/viewform?usp=pp_url&entry.1458296354=${encodeURIComponent(postNumber)}`;
 
-            // 管理者アイコンの追加（画像のみ）
-            let adminIconHtml = '';
-            if (username === "YU1000") {
-              adminIconHtml = `<img src="kanri.png" alt="管理者" class="admin-icon">`;
-            }
-
-            postElement.innerHTML = `
-              <p>
-                <strong>${username}</strong>${adminIconHtml}: <span class="post-content">${content}</span>
-                <br>
-                <span class="post-date">${formattedDate}</span>
-                <button class="reply-button" onclick="replyToPost('${postNumber}')">返信</button>
-                <span class="post-number">${postNumber}</span>
-                <button class="report-button" onclick="window.open('${reportUrl}', '_blank')">報告</button>
-              </p>`;
-            postsDiv.appendChild(postElement);
+          const replyPattern = /^&gt;&gt;&gt;#(\d+)/;
+          if (replyPattern.test(content)) {
+            content = content.replace(replyPattern, (match, p1) => {
+              return `<a href="#post-${p1}" class="post-number-link">${match}</a>`;
+            });
           }
-        });
+
+          let adminIconHtml = '';
+          if (username === "YU1000") {
+            adminIconHtml = `<img src="kanri.png" alt="管理者" class="admin-icon">`;
+          }
+
+          postElement.innerHTML = `
+            <p>
+              <strong>${username}</strong>${adminIconHtml}: <span class="post-content">${content}</span>
+              <br>
+              <span class="post-date">${formattedDate}</span>
+              <button class="reply-button" onclick="replyToPost('${postNumber}')">返信</button>
+              <span class="post-number">${postNumber}</span>
+              <button class="report-button" onclick="window.open('${reportUrl}', '_blank')">報告</button>
+            </p>`;
+          postsDiv.appendChild(postElement);
+        }
+      });
+
+      loadMoreButton.style.display = posts.length > visibleCount ? 'inline-block' : 'none';
+    }
+
+    async function fetchPosts() {
+      const postsDiv = document.getElementById("posts");
+      try {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbxdCarkggYZJvshEx07ItNVIV2B3zQ4N910AIjWsUyQ_IGCmo51Gceq_uqimJS1C365eA/exec');
+        const json = await response.json();
+        const basePosts = Array.isArray(json) ? json.slice(1) : [];
+
+        // まず既存データを即時描画（ここを遅らせない）
+        renderPosts(applyActiveFilter(basePosts));
+
+        // 200件制限の可能性があるときだけ、バックグラウンドで補完
+        if (basePosts.length >= 200) {
+          fetchPostsFromNumberApi(basePosts.length + 1).then(extraPosts => {
+            if (!Array.isArray(extraPosts) || extraPosts.length === 0) return;
+
+            const combined = basePosts.concat(extraPosts);
+            // date+username+content の簡易重複排除
+            const unique = [];
+            const seen = new Set();
+            combined.forEach(post => {
+              const key = `${post[0]}__${post[1]}__${post[2]}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                unique.push(post);
+              }
+            });
+            renderPosts(applyActiveFilter(unique));
+          }).catch(() => {
+            // 補完失敗でも初回描画は維持
+          });
+        }
+      } catch (_error) {
+        postsDiv.innerHTML = `<p>投稿の取得に失敗しました。時間をおいて再読み込みしてください。</p>`;
       }
     }
+
+    // ここから既存処理
+
 
     function replyToPost(postNumber) {
       const contentField = document.getElementById('content');
@@ -284,6 +606,24 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      const currentTheme = localStorage.getItem('theme');
+      if (currentTheme === 'dark') {
+        document.body.classList.add('theme-dark');
+        document.getElementById('theme-toggle').textContent = '☀️ ライト';
+      }
+
+      document.getElementById('theme-toggle').addEventListener('click', () => {
+        document.body.classList.toggle('theme-dark');
+        const dark = document.body.classList.contains('theme-dark');
+        localStorage.setItem('theme', dark ? 'dark' : 'light');
+        document.getElementById('theme-toggle').textContent = dark ? '☀️ ライト' : '🌙 ダーク';
+      });
+
+      document.getElementById('load-more').addEventListener('click', () => {
+        visibleCount += 50;
+        renderPosts(currentFilteredPosts);
+      });
+
       fetchPosts();
       setInterval(fetchPosts, 5000);
 
